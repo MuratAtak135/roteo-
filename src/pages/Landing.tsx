@@ -21,7 +21,7 @@ export default function Landing({ onStart }: { onStart: () => void }) {
           borderRadius: '20px', padding: '5px 14px',
           fontSize: '12px', fontWeight: 600, color: '#60a5fa', marginBottom: '20px',
         }}>
-          ⚡ VROOM Tabanlı Rota Optimizasyonu
+            VROOM Tabanlı Rota Optimizasyonu
         </div>
 
         <h1 style={{
@@ -36,7 +36,7 @@ export default function Landing({ onStart }: { onStart: () => void }) {
         </h1>
 
         <p style={{ fontSize: 'clamp(14px, 2vw, 16px)', color: '#94a3b8', maxWidth: '440px', lineHeight: 1.65, margin: '0 0 32px' }}>
-          Çoklu araç, süre ve kapasite kısıtlarını dikkate alarak en verimli dağıtım rotasını otomatik hesaplar.
+          Çoklu araç, süre ve kapasite kısıtlarını dikkate alarak dağıtım rotasını optimize eder.
         </p>
 
         <button onClick={onStart} style={{
@@ -62,8 +62,8 @@ export default function Landing({ onStart }: { onStart: () => void }) {
         <div style={{ maxWidth: '800px', margin: '0 auto', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '10px' }}>
           {[
             { n: '01', t: 'Depo & Araç Ekle', d: 'Başlangıç noktanızı ve araçlarınızı tanımlayın.' },
-            { n: '02', t: 'Durakları Girin', d: 'Haritaya tıklayarak teslimat noktaları ekleyin.' },
-            { n: '03', t: 'Optimize Edin', d: 'VROOM ile gerçek yol ağında en kısa rotayı bulun.' },
+            { n: '02', t: 'Durakları Girin', d: 'Teslimat noktaları ekleyin.' },
+            { n: '03', t: 'Optimize Edin', d: 'VROOM ile rotayı optimize edin.' },
           ].map(f => (
             <div key={f.n} style={{ textAlign: 'left' }}>
               <div style={{ fontSize: '10px', fontWeight: 700, color: '#3b82f6', letterSpacing: '0.08em', marginBottom: '3px' }}>ADIM {f.n}</div>
