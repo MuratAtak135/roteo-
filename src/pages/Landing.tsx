@@ -36,7 +36,7 @@ export default function Landing({ onStart }: { onStart: () => void }) {
         </h1>
 
         <p style={{ fontSize: 'clamp(14px, 2vw, 16px)', color: '#94a3b8', maxWidth: '440px', lineHeight: 1.65, margin: '0 0 32px' }}>
-          Çoklu araç, zaman penceresi ve kapasite kısıtlarını dikkate alarak en verimli dağıtım rotasını otomatik hesaplar.
+          Çoklu araç, süre ve kapasite kısıtlarını dikkate alarak en verimli dağıtım rotasını otomatik hesaplar.
         </p>
 
         <button onClick={onStart} style={{
