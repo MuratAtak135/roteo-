@@ -151,7 +151,7 @@ export default function Dashboard() {
   const [stopForm, setStopForm] = useState({ name: '', priority: 2, time_window_start: '09:00', time_window_end: '18:00', service_duration_min: 10, weight_kg: 0, parcel_count: 1 })
 
   const [showVehicleModal, setShowVehicleModal] = useState(false)
-  const [vForm, setVForm] = useState<Omit<Vehicle, 'id'>>({ name: '', plate: '', type: 'van', max_weight_kg: 1000, max_parcels: 50, depot_id: '', end_depot_id: '', return_to_depot: true, start_time: '08:00', end_time: '18:00', max_days: 1 })
+  const [vForm, setVForm] = useState<Omit<Vehicle, 'id'>>({ name: '', plate: '', type: 'van', max_weight_kg: 1000, max_parcels: 50, depot_id: '', end_depot_id: '', return_to_depot: true, start_time: '08:00', end_time: '18:00', max_days: 7 })
   const [vErrors, setVErrors] = useState<Record<string, string>>({})
 
   const [showDepotModal, setShowDepotModal] = useState(false)
@@ -333,7 +333,7 @@ export default function Dashboard() {
     if (Object.keys(errs).length > 0) return
     setVehicles(prev => [...prev, { ...vForm, id: crypto.randomUUID() }])
     setShowVehicleModal(false); setVErrors({})
-    setVForm({ name: '', plate: '', type: 'van', max_weight_kg: 1000, max_parcels: 50, depot_id: depots[0]?.id || '', end_depot_id: depots[0]?.id || '', return_to_depot: true, start_time: '08:00', end_time: '18:00', max_days: 1 })
+    setVForm({ name: '', plate: '', type: 'van', max_weight_kg: 1000, max_parcels: 50, depot_id: depots[0]?.id || '', end_depot_id: depots[0]?.id || '', return_to_depot: true, start_time: '08:00', end_time: '18:00', max_days: 7 })
   }
 
   function submitDepot() {
@@ -513,7 +513,7 @@ export default function Dashboard() {
               {tab === 'stops' && (
                 <>
                   {depots.length === 0 && (
-                    <InfoBox icon="👋" title="Hoş geldiniz! Başlamak için:">
+                    <InfoBox icon="" title="Hoş geldiniz! Başlamak için:">
                       <div style={{ display: 'flex', flexDirection: 'column', gap: '3px' }}>
                         <span>1. <span onClick={() => setPage('depots')} style={{ color: C.accent, cursor: 'pointer', fontWeight: 600, textDecoration: 'underline' }}>Depolar</span> sayfasından depo ekleyin</span>
                         <span>2. Araçlar sekmesinden araç ekleyin</span>
@@ -609,11 +609,7 @@ export default function Dashboard() {
                       <span onClick={() => { setPage('depots'); if (isMobile) setSidebarOpen(false) }} style={{ color: C.accent, cursor: 'pointer', fontWeight: 600 }}>Depolar sayfasına git →</span>
                     </InfoBox>
                   )}
-                  {depots.length > 0 && vehicles.length === 0 && (
-                    <InfoBox icon="🚛" title="Araç nasıl eklenir?" color={C.accent}>
-                      Aşağıdaki butona tıklayın. Depo, kapasite ve çalışma saatlerini belirleyin.
-                    </InfoBox>
-                  )}
+
                   <div style={{ flex: 1, overflowY: 'auto', padding: '8px' }}>
                     {vehicles.length === 0
                       ? <EmptyState icon="🚛" title="Araç yok" sub={depots.length === 0 ? 'Önce depo ekleyin' : '"Araç Ekle" butonuna tıklayın'} />
@@ -813,16 +809,7 @@ export default function Dashboard() {
             <input value={vForm.name} onChange={e => { setVForm(f => ({ ...f, name: e.target.value })); setVErrors(p => ({ ...p, name: '' })) }} placeholder="Örn: Araç 1" style={inp(vErrors.name)} />
             {vErrors.name && <span style={{ fontSize: '11px', color: C.danger }}>{vErrors.name}</span>}
           </Field>
-          <Field label="Plaka"><input value={vForm.plate} onChange={e => setVForm(f => ({ ...f, plate: e.target.value }))} placeholder="34 ABC 123" style={inp()} /></Field>
-          <Field label="Araç Tipi">
-            <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
-              {Object.entries(VC).map(([k, v]) => (
-                <button key={k} onClick={() => setVForm(f => ({ ...f, type: k as Vehicle['type'] }))} style={{ padding: '7px 11px', borderRadius: '7px', cursor: 'pointer', fontSize: '12px', fontWeight: 600, border: `1.5px solid ${vForm.type === k ? C.accent : C.border}`, background: vForm.type === k ? C.accentL : C.bgCard, color: vForm.type === k ? C.accent : C.textMuted }}>
-                  {v.i} {v.l}
-                </button>
-              ))}
-            </div>
-          </Field>
+
           <div style={{ display: 'flex', gap: '10px' }}>
             <Field label="Max Ağırlık (kg)" flex><input type="number" value={vForm.max_weight_kg} onChange={e => setVForm(f => ({ ...f, max_weight_kg: +e.target.value }))} style={inp()} /></Field>
             <Field label="Max Koli" flex><input type="number" value={vForm.max_parcels} onChange={e => setVForm(f => ({ ...f, max_parcels: +e.target.value }))} style={inp()} /></Field>
