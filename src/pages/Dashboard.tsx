@@ -27,15 +27,19 @@ interface OptimizedRoute {
 }
 interface Summary { total_distance_km: number; total_stops: number; unassigned_count: number; vehicles_used: number }
 
-const PR: Record<number, { label: string; color: string; bg: string }> = {
-  1: { label: 'Acil', color: '#ef4444', bg: 'rgba(239,68,68,0.1)' },
-  2: { label: 'Normal', color: '#f59e0b', bg: 'rgba(245,158,11,0.1)' },
-  3: { label: 'Düşük', color: '#22c55e', bg: 'rgba(34,197,94,0.1)' },
-}
-const VC: Record<string, { l: string; i: string }> = {
-  car: { l: 'Otomobil', i: '🚗' }, van: { l: 'Kamyonet', i: '🚐' },
-  truck: { l: 'Kamyon', i: '🚛' }, semi: { l: 'TIR', i: '🚜' },
-}
+const getPR = (lang: string): Record<number, { label: string; color: string; bg: string }> => ({
+  1: { label: lang === 'tr' ? 'Acil' : 'Urgent', color: '#ef4444', bg: 'rgba(239,68,68,0.1)' },
+  2: { label: lang === 'tr' ? 'Normal' : 'Normal', color: '#f59e0b', bg: 'rgba(245,158,11,0.1)' },
+  3: { label: lang === 'tr' ? 'Düşük' : 'Low', color: '#22c55e', bg: 'rgba(34,197,94,0.1)' },
+})
+
+const getVC = (lang: string): Record<string, { l: string; i: string }> => ({
+  car: { l: lang === 'tr' ? 'Otomobil' : 'Car', i: '🚗' },
+  van: { l: lang === 'tr' ? 'Kamyonet' : 'Van', i: '🚐' },
+  truck: { l: lang === 'tr' ? 'Kamyon' : 'Truck', i: '🚛' },
+  semi: { l: lang === 'tr' ? 'TIR' : 'Semi', i: '🚜' },
+})
+
 const COLORS = ['#3b82f6', '#ef4444', '#22c55e', '#f59e0b', '#8b5cf6', '#ec4899', '#06b6d4', '#84cc16']
 
 const C = {
@@ -49,7 +53,6 @@ const C = {
   shadow: '0 8px 32px rgba(0,0,0,0.35)',
 }
 
-// URL builders
 function buildGoogleMapsUrl(route: OptimizedRoute, depot: Depot | undefined, returnToDepot: boolean): string {
   const pts = [
     depot ? `${depot.lat},${depot.lng}` : '',
@@ -109,16 +112,173 @@ function Field({ label, flex, children }: { label: string; flex?: boolean; child
   )
 }
 
-function ModalActions({ onCancel, onSubmit, label }: { onCancel: () => void; onSubmit: () => void; label: string }) {
+function ModalActions({ onCancel, onSubmit, label, cancelText }: { onCancel: () => void; onSubmit: () => void; label: string; cancelText: string }) {
   return (
     <div style={{ display: 'flex', gap: '8px', marginTop: '2px' }}>
-      <button onClick={onCancel} style={{ flex: 1, padding: '10px', borderRadius: '8px', border: `1px solid ${C.border}`, background: C.bgCard, color: C.textMuted, fontSize: '13px', fontWeight: 600, cursor: 'pointer' }}>İptal</button>
+      <button onClick={onCancel} style={{ flex: 1, padding: '10px', borderRadius: '8px', border: `1px solid ${C.border}`, background: C.bgCard, color: C.textMuted, fontSize: '13px', fontWeight: 600, cursor: 'pointer' }}>{cancelText}</button>
       <button onClick={onSubmit} style={{ flex: 2, padding: '10px', borderRadius: '8px', border: 'none', background: C.accent, color: '#fff', fontSize: '13px', fontWeight: 700, cursor: 'pointer' }}>{label}</button>
     </div>
   )
 }
 
-export default function Dashboard() {
+export default function Dashboard({ lang = 'en' }: { lang?: 'en' | 'tr' }) {
+  const PR = getPR(lang)
+  const VC = getVC(lang)
+  const T = lang === 'tr' ? {
+    cancel: 'İptal',
+    plan: 'Rota Planlama', depots: 'Depolar',
+    systemActive: 'Sistem Aktif',
+    traffic: 'Trafik', satellite: '🛰 Uydu', streets: '🗺 Sokak',
+    optimizing: 'Hesaplanıyor...', optimizeBtn: 'Optimize Et', optimizeMobile: 'Optimize',
+    panel: '📋 Panel', map: '🗺 Harita',
+    stopsTab: 'Duraklar', vehiclesTab: 'Araçlar', resultTab: 'Sonuç',
+    welcomeTitle: 'Hoş geldiniz! Başlamak için:',
+    w1: '1. ', w1Link: 'Depolar', w1End: ' sayfasından depo ekleyin',
+    w2: '2. Araçlar sekmesinden araç ekleyin',
+    w3m: '3. Harita sekmesine geçip tıklayın', w3d: '3. Haritaya tıklayarak durak ekleyin',
+    w4: '4. "Optimize Et" butonuna basın',
+    needVehTitle: 'Araç eklemeniz gerekiyor',
+    needVehSub: 'Araçlar sekmesine geçip en az 1 araç ekleyin.',
+    greatStopsTitle: 'Harika! Şimdi durak ekleyin',
+    greatStopsSubM: 'Harita sekmesine geçip haritaya tıklayın.',
+    greatStopsSubD: 'Haritaya tıklayın veya aşağıdan adres arayın.',
+    searchPlaceholder: '🔍 Tam ilçe veya mahalle adı yazın...',
+    searching: 'aranıyor...',
+    noStops: 'Durak yok', noStopsSub: 'Adres arayın veya haritaya tıklayın',
+    optStopsBtn: ' Durağı Optimize Et',
+    needDepotFirst: 'Önce depo ekleyin',
+    goDepots: 'Depolar sayfasına git →',
+    noVehs: 'Araç yok', noVehsSubDepot: 'Önce depo ekleyin', noVehsSubBtn: '"Araç Ekle" butonuna tıklayın',
+    openRouteDesc: '→ Açık rota', daysDesc: 'günlük',
+    addVehBtn: 'Araç Ekle',
+    noResult: 'Sonuç yok', noResultSub: 'Durak ve araç ekleyip optimize edin',
+    demoTitle: 'Demo Sürümü Hakkında',
+    demoDesc: 'Gösterilen süreler gerçek yol mesafesine dayalı tahmindir. Anlık trafik hesaba katılmamaktadır.',
+    optDone: '✓ Optimizasyon Tamamlandı',
+    vehCard: 'Araç', stopCard: 'Durak', distCard: 'Toplam Mesafe', unassignedCard: 'Atanamayan',
+    minText: 'dk',
+    openMaps: "Google Maps'te Aç",
+    noTraficNote: '* Trafik dahil edilmeden hesaplanmıştır',
+    unassignedTitle: '⚠ Atanamayan',
+    unassignedDesc: 'Kapasite veya zaman kısıtı nedeniyle atanamadı.',
+    mapHint: 'Haritaya tıklayarak durak ekleyebilirsiniz',
+    depotMgmtTitle: 'Depo Yönetimi',
+    depotMgmtSub: 'Araçların başlangıç ve bitiş noktaları',
+    addDepotBtn: 'Depo Ekle',
+    whatIsDepotTitle: 'Depo nedir?',
+    whatIsDepotDesc: 'Araçların yolculuğa başladığı ve/veya bitirdiği noktadır. Firmanızın deposu, ofisi veya herhangi bir başlangıç noktası olabilir. Optimize edebilmek için en az 1 depo gereklidir.',
+    noDepotsTitle: 'Depo yok', noDepotsSub: 'İlk deponuzu ekleyin',
+    addStopModalTitle: 'Durak Ekle',
+    stopNameLabel: 'Durak Adı',
+    priorityLabel: 'Öncelik',
+    winStartLabel: 'Pencere Başlangıç', winEndLabel: 'Pencere Bitiş',
+    weightLabel: 'Ağırlık (kg)',
+    parcelLabel: 'Koli',
+    serviceLabel: 'Hizmet (dk)',
+    submitStopBtn: 'Durağı Ekle',
+    addVehModalTitle: 'Araç Ekle', addVehModalSub: 'Aracın özelliklerini belirleyin',
+    vehNameLabel: 'Araç Adı', vehNamePlaceholder: 'Örn: Araç 1',
+    maxWeightLabel: 'Max Ağırlık (kg)', maxParcelLabel: 'Max Koli',
+    startDepotLabel: 'Başlangıç Deposu', selectDepotEmpty: '— Depo seçin —',
+    endDepotLabel: 'Rota Sonu',
+    optSameDepot: '🔄 Aynı Depoya Dön', optOpenRoute: '🚪 Açık Rota', optDiffDepot: '🏭 Farklı Depo',
+    startLabel: 'Çıkış', endLabel: 'Bitiş', maxDaysLabel: 'Max Gün',
+    submitVehBtn: 'Aracı Ekle',
+    addDepotModalTitle: 'Depo Ekle', addDepotModalSub: 'Araçların başlangıç/bitiş noktası',
+    depotNameLabel: 'Depo Adı', depotNamePlaceholder: 'Örn: Merkez Depo',
+    addressLabel: 'Adres', addressPlaceholder: 'İlçe veya mahalle adı yazın...',
+    selectFromListInfo: 'Listeden bir sonuç seçin',
+    submitDepotBtn: 'Depoyu Ekle',
+    errMin2Stops: 'En az 2 durak gerekli.',
+    errMin1Veh: 'En az 1 araç gerekli.',
+    errAddDepot: 'Önce depo ekleyin.',
+    errConn: 'Bağlantı hatası.',
+    errVehName: 'Araç adı giriniz',
+    errDepotSelect: 'Depo seçiniz',
+    errDepotName: 'Depo adı giriniz',
+    errAddressSelect: 'Listeden bir adres seçiniz',
+    dateLocale: 'tr-TR'
+  } : {
+    cancel: 'Cancel',
+    plan: 'Route Planning', depots: 'Depots',
+    systemActive: 'System Active',
+    traffic: 'Traffic', satellite: '🛰 Satellite', streets: '🗺 Streets',
+    optimizing: 'Optimizing...', optimizeBtn: 'Optimize', optimizeMobile: 'Optimize',
+    panel: '📋 Panel', map: '🗺 Map',
+    stopsTab: 'Stops', vehiclesTab: 'Vehicles', resultTab: 'Result',
+    welcomeTitle: 'Welcome! To start:',
+    w1: '1. Add a depot from the ', w1Link: 'Depots', w1End: ' page',
+    w2: '2. Add a vehicle from the Vehicles tab',
+    w3m: '3. Switch to the Map tab and click on the map', w3d: '3. Click on the map to add stops',
+    w4: '4. Click the "Optimize" button',
+    needVehTitle: 'You need to add a vehicle',
+    needVehSub: 'Switch to the Vehicles tab and add at least 1 vehicle.',
+    greatStopsTitle: 'Great! Now add stops',
+    greatStopsSubM: 'Switch to the Map tab and click on the map.',
+    greatStopsSubD: 'Click on the map or search for an address below.',
+    searchPlaceholder: '🔍 Type full district or neighborhood name...',
+    searching: 'searching...',
+    noStops: 'No stops', noStopsSub: 'Search address or click on map',
+    optStopsBtn: ' Optimize Stops',
+    needDepotFirst: 'Add a depot first',
+    goDepots: 'Go to Depots page →',
+    noVehs: 'No vehicles', noVehsSubDepot: 'Add a depot first', noVehsSubBtn: 'Click "Add Vehicle" button',
+    openRouteDesc: '→ Open route', daysDesc: 'days',
+    addVehBtn: 'Add Vehicle',
+    noResult: 'No result', noResultSub: 'Add stops and vehicles, then optimize',
+    demoTitle: 'About Demo Version',
+    demoDesc: 'Displayed times are estimates based on actual road distance. Real-time traffic is not accounted for.',
+    optDone: '✓ Optimization Complete',
+    vehCard: 'Vehicle', stopCard: 'Stop', distCard: 'Total Distance', unassignedCard: 'Unassigned',
+    minText: 'min',
+    openMaps: 'Open in Google Maps',
+    noTraficNote: '* Calculated without including traffic',
+    unassignedTitle: '⚠ Unassigned',
+    unassignedDesc: 'Could not be assigned due to capacity or time constraints.',
+    mapHint: 'You can add stops by clicking on the map',
+    depotMgmtTitle: 'Depot Management',
+    depotMgmtSub: 'Start and end points for vehicles',
+    addDepotBtn: 'Add Depot',
+    whatIsDepotTitle: 'What is a depot?',
+    whatIsDepotDesc: 'It is the point where vehicles start and/or end their journey. It can be your company depot, office, or any starting point. At least 1 depot is required to optimize.',
+    noDepotsTitle: 'No depots', noDepotsSub: 'Add your first depot',
+    addStopModalTitle: 'Add Stop',
+    stopNameLabel: 'Stop Name',
+    priorityLabel: 'Priority',
+    winStartLabel: 'Window Start', winEndLabel: 'Window End',
+    weightLabel: 'Weight (kg)',
+    parcelLabel: 'Parcels',
+    serviceLabel: 'Service (min)',
+    submitStopBtn: 'Add Stop',
+    addVehModalTitle: 'Add Vehicle', addVehModalSub: 'Define vehicle properties',
+    vehNameLabel: 'Vehicle Name', vehNamePlaceholder: 'e.g., Vehicle 1',
+    maxWeightLabel: 'Max Weight (kg)', maxParcelLabel: 'Max Parcels',
+    startDepotLabel: 'Start Depot', selectDepotEmpty: '— Select depot —',
+    endDepotLabel: 'End Depot',
+    optSameDepot: '🔄 Return to Same', optOpenRoute: '🚪 Open Route', optDiffDepot: '🏭 Different Depot',
+    startLabel: 'Start', endLabel: 'End', maxDaysLabel: 'Max Days',
+    submitVehBtn: 'Add Vehicle',
+    addDepotModalTitle: 'Add Depot', addDepotModalSub: 'Start/end point for vehicles',
+    depotNameLabel: 'Depot Name', depotNamePlaceholder: 'e.g., Main Depot',
+    addressLabel: 'Address', addressPlaceholder: 'Type district or neighborhood...',
+    selectFromListInfo: 'Select a result from the list',
+    submitDepotBtn: 'Add Depot',
+    errMin2Stops: 'At least 2 stops required.',
+    errMin1Veh: 'At least 1 vehicle required.',
+    errAddDepot: 'Add a depot first.',
+    errConn: 'Connection error.',
+    errVehName: 'Enter vehicle name',
+    errDepotSelect: 'Select a depot',
+    errDepotName: 'Enter depot name',
+    errAddressSelect: 'Select an address from the list',
+    dateLocale: 'en-US'
+  }
+
+  const navItems = [
+    { id: 'plan', label: T.plan, Icon: MapIcon },
+    { id: 'depots', label: T.depots, Icon: DepotIcon },
+  ]
+
   const [page, setPage] = useState('plan')
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768)
@@ -232,11 +392,11 @@ export default function Dashboard() {
       const mLink = `https://www.google.com/maps/dir/?api=1&destination=${s.lat},${s.lng}`
       const m = new maplibregl.Marker({ element: el, anchor: 'center' })
         .setLngLat([s.lng, s.lat])
-        .setPopup(new maplibregl.Popup({ offset: 15 }).setHTML(`<div style="padding:8px;font-family:sans-serif;min-width:190px"><strong style="color:#111">${s.name}</strong><br/><span style="font-size:11px;color:#6b7280">${s.address.substring(0, 55)}</span><br/><a href="${mLink}" target="_blank" style="display:inline-block;margin-top:5px;font-size:11px;color:#2563eb;text-decoration:none;padding:3px 7px;background:#eff6ff;border-radius:4px;font-weight:600">Google Maps ↗</a></div>`))
+        .setPopup(new maplibregl.Popup({ offset: 15 }).setHTML(`<div style="padding:8px;font-family:sans-serif;min-width:190px"><strong style="color:#111">${s.name}</strong><br/><span style="font-size:11px;color:#6b7280">${s.address.substring(0, 55)}</span><br/><a href="${mLink}" target="_blank" style="display:inline-block;margin-top:5px;font-size:11px;color:#2563eb;text-decoration:none;padding:3px 7px;background:#eff6ff;border-radius:4px;font-weight:600">${T.openMaps} ↗</a></div>`))
         .addTo(map.current!)
       markers.current[`stop_${s.id}`] = m
     })
-  }, [stops, depots, mapReady, orderedStopIds, routes])
+  }, [stops, depots, mapReady, orderedStopIds, routes, lang])
 
   // ROUTES
   useEffect(() => {
@@ -256,7 +416,7 @@ export default function Dashboard() {
 
   async function revGeo(lat: number, lng: number): Promise<string> {
     try {
-      const r = await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json&accept-language=tr`)
+      const r = await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json&accept-language=${lang}`)
       const d = await r.json()
       return d.display_name || `${lat.toFixed(5)},${lng.toFixed(5)}`
     } catch { return `${lat.toFixed(5)},${lng.toFixed(5)}` }
@@ -270,7 +430,7 @@ export default function Dashboard() {
     }
     if (type === 'stop') setSearching(true)
     try {
-      const url = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(query)}&format=json&limit=7&accept-language=tr&countrycodes=tr&addressdetails=1`
+      const url = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(query)}&format=json&limit=7&accept-language=${lang}&countrycodes=tr&addressdetails=1`
       const r = await fetch(url)
       const data = await r.json()
       if (type === 'stop') setQResults(data)
@@ -327,8 +487,8 @@ export default function Dashboard() {
 
   function submitVehicle() {
     const errs: Record<string, string> = {}
-    if (!vForm.name.trim()) errs.name = 'Araç adı giriniz'
-    if (!vForm.depot_id) errs.depot = 'Depo seçiniz'
+    if (!vForm.name.trim()) errs.name = T.errVehName
+    if (!vForm.depot_id) errs.depot = T.errDepotSelect
     setVErrors(errs)
     if (Object.keys(errs).length > 0) return
     setVehicles(prev => [...prev, { ...vForm, id: crypto.randomUUID() }])
@@ -338,8 +498,8 @@ export default function Dashboard() {
 
   function submitDepot() {
     const errs: Record<string, string> = {}
-    if (!dForm.name.trim()) errs.name = 'Depo adı giriniz'
-    if (!dForm.address || !dForm.lat) errs.address = 'Listeden bir adres seçiniz'
+    if (!dForm.name.trim()) errs.name = T.errDepotName
+    if (!dForm.address || !dForm.lat) errs.address = T.errAddressSelect
     setDErrors(errs)
     if (Object.keys(errs).length > 0) return
     setDepots(prev => [...prev, { ...dForm, id: crypto.randomUUID() }])
@@ -347,9 +507,9 @@ export default function Dashboard() {
   }
 
   async function optimize() {
-    if (stops.length < 2) { setOptimError('En az 2 durak gerekli.'); return }
-    if (vehicles.length === 0) { setOptimError('En az 1 araç gerekli.'); return }
-    if (depots.length === 0) { setOptimError('Önce depo ekleyin.'); return }
+    if (stops.length < 2) { setOptimError(T.errMin2Stops); return }
+    if (vehicles.length === 0) { setOptimError(T.errMin1Veh); return }
+    if (depots.length === 0) { setOptimError(T.errAddDepot); return }
     setOptimizing(true); setOptimError(''); setRoutes([]); setUnassigned([]); setSummary(null); setOrderedStopIds([])
     try {
       const vwd = vehicles.map(v => {
@@ -378,15 +538,11 @@ export default function Dashboard() {
         const lngs = stops.map(s => s.lng), lats = stops.map(s => s.lat)
         map.current?.fitBounds([[Math.min(...lngs) - 0.2, Math.min(...lats) - 0.2], [Math.max(...lngs) + 0.2, Math.max(...lats) + 0.2]], { padding: 60 })
       }
-    } catch { setOptimError('Bağlantı hatası.') }
+    } catch { setOptimError(T.errConn) }
     setOptimizing(false)
   }
 
   const canOpt = stops.length >= 2 && vehicles.length > 0 && depots.length > 0
-  const navItems = [
-    { id: 'plan', label: 'Rota Planlama', Icon: MapIcon },
-    { id: 'depots', label: 'Depolar', Icon: DepotIcon },
-  ]
 
   // Panel genişliği
   const panelWidth = isMobile ? '100%' : '360px'
@@ -402,7 +558,7 @@ export default function Dashboard() {
           </button>
           <img src="/logo.png" alt="Atak Route" style={{ height: '32px', objectFit: 'contain' }} onError={e => { (e.target as HTMLImageElement).style.display = 'none' }} />
           <button onClick={optimize} disabled={optimizing || !canOpt} style={{ display: 'flex', alignItems: 'center', gap: '4px', background: canOpt && !optimizing ? C.accent : C.bgCard, color: canOpt && !optimizing ? '#fff' : C.textDim, border: 'none', borderRadius: '7px', padding: '6px 10px', fontSize: '12px', fontWeight: 700, cursor: canOpt && !optimizing ? 'pointer' : 'not-allowed' }}>
-            <ZapIcon />{optimizing ? '...' : 'Optimize'}
+            <ZapIcon />{optimizing ? T.optimizing : T.optimizeMobile}
           </button>
         </div>
       )}
@@ -446,7 +602,7 @@ export default function Dashboard() {
             </nav>
             <div style={{ padding: '12px 16px', borderTop: `1px solid ${C.border}`, display: 'flex', alignItems: 'center', gap: '6px' }}>
               <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: C.success }} />
-              <span style={{ fontSize: '11px', color: C.textDim }}>Sistem Aktif</span>
+              <span style={{ fontSize: '11px', color: C.textDim }}>{T.systemActive}</span>
             </div>
           </aside>
         )}
@@ -458,19 +614,19 @@ export default function Dashboard() {
           {!isMobile && (
             <header style={{ height: '54px', background: C.bgPanel, borderBottom: `1px solid ${C.border}`, display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 20px', flexShrink: 0 }}>
               <div>
-                <h1 style={{ fontSize: '14px', fontWeight: 700, color: C.text, margin: 0 }}>{navItems.find(n => n.id === page)?.label ?? 'Depolar'}</h1>
-                <p style={{ fontSize: '11px', color: C.textDim, margin: '1px 0 0' }}>{new Date().toLocaleDateString('tr-TR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}</p>
+                <h1 style={{ fontSize: '14px', fontWeight: 700, color: C.text, margin: 0 }}>{navItems.find(n => n.id === page)?.label ?? T.depots}</h1>
+                <p style={{ fontSize: '11px', color: C.textDim, margin: '1px 0 0' }}>{new Date().toLocaleDateString(T.dateLocale, { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}</p>
               </div>
               {page === 'plan' && (
                 <div style={{ display: 'flex', gap: '7px', alignItems: 'center' }}>
                   <button onClick={toggleTraffic} style={{ display: 'flex', alignItems: 'center', gap: '5px', background: C.bgCard, color: trafficOn ? C.success : C.textMuted, border: `1px solid ${trafficOn ? 'rgba(34,197,94,0.3)' : C.border}`, borderRadius: '7px', padding: '6px 11px', fontSize: '12px', fontWeight: 600, cursor: 'pointer' }}>
-                    <span style={{ width: '5px', height: '5px', borderRadius: '50%', background: trafficOn ? C.success : C.textDim }} />Trafik
+                    <span style={{ width: '5px', height: '5px', borderRadius: '50%', background: trafficOn ? C.success : C.textDim }} />{T.traffic}
                   </button>
                   <button onClick={toggleStyle} style={{ background: C.bgCard, color: C.textMuted, border: `1px solid ${C.border}`, borderRadius: '7px', padding: '6px 11px', fontSize: '12px', fontWeight: 600, cursor: 'pointer' }}>
-                    {mapStyle === 'streets' ? '🛰 Uydu' : '🗺 Sokak'}
+                    {mapStyle === 'streets' ? T.satellite : T.streets}
                   </button>
                   <button onClick={optimize} disabled={optimizing || !canOpt} style={{ display: 'flex', alignItems: 'center', gap: '5px', background: canOpt && !optimizing ? C.accent : C.bgCard, color: canOpt && !optimizing ? '#fff' : C.textDim, border: 'none', borderRadius: '7px', padding: '7px 14px', fontSize: '13px', fontWeight: 700, cursor: canOpt && !optimizing ? 'pointer' : 'not-allowed' }}>
-                    <ZapIcon />{optimizing ? 'Hesaplanıyor...' : 'Optimize Et'}
+                    <ZapIcon />{optimizing ? T.optimizing : T.optimizeBtn}
                   </button>
                 </div>
               )}
@@ -484,10 +640,10 @@ export default function Dashboard() {
             {isMobile && (
               <div style={{ display: 'flex', borderBottom: `1px solid ${C.border}`, background: C.bgPanel, flexShrink: 0 }}>
                 <button onClick={() => setShowPanel(true)} style={{ flex: 1, padding: '10px', background: showPanel ? C.accentL : 'none', border: 'none', color: showPanel ? C.accent : C.textMuted, fontSize: '12px', fontWeight: 600, cursor: 'pointer', borderBottom: showPanel ? `2px solid ${C.accent}` : '2px solid transparent' }}>
-                  📋 Panel
+                  {T.panel}
                 </button>
                 <button onClick={() => { setShowPanel(false); setTimeout(() => map.current?.resize(), 100) }} style={{ flex: 1, padding: '10px', background: !showPanel ? C.accentL : 'none', border: 'none', color: !showPanel ? C.accent : C.textMuted, fontSize: '12px', fontWeight: 600, cursor: 'pointer', borderBottom: !showPanel ? `2px solid ${C.accent}` : '2px solid transparent' }}>
-                  🗺 Harita
+                  {T.map}
                 </button>
               </div>
             )}
@@ -498,9 +654,9 @@ export default function Dashboard() {
               {/* Tabs */}
               <div style={{ display: 'flex', borderBottom: `1px solid ${C.border}` }}>
                 {([
-                  { id: 'stops', l: 'Duraklar', c: stops.length },
-                  { id: 'vehicles', l: 'Araçlar', c: vehicles.length },
-                  { id: 'result', l: 'Sonuç', c: routes.length },
+                  { id: 'stops', l: T.stopsTab, c: stops.length },
+                  { id: 'vehicles', l: T.vehiclesTab, c: vehicles.length },
+                  { id: 'result', l: T.resultTab, c: routes.length },
                 ] as const).map(t => (
                   <button key={t.id} onClick={() => setTab(t.id)} style={{ flex: 1, padding: '11px 4px', fontSize: '12px', fontWeight: 600, cursor: 'pointer', background: 'none', border: 'none', color: tab === t.id ? C.accent : C.textMuted, borderBottom: tab === t.id ? `2px solid ${C.accent}` : '2px solid transparent', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px' }}>
                     {t.l}
@@ -513,29 +669,29 @@ export default function Dashboard() {
               {tab === 'stops' && (
                 <>
                   {depots.length === 0 && (
-                    <InfoBox icon="" title="Hoş geldiniz! Başlamak için:">
+                    <InfoBox icon="" title={T.welcomeTitle}>
                       <div style={{ display: 'flex', flexDirection: 'column', gap: '3px' }}>
-                        <span>1. <span onClick={() => setPage('depots')} style={{ color: C.accent, cursor: 'pointer', fontWeight: 600, textDecoration: 'underline' }}>Depolar</span> sayfasından depo ekleyin</span>
-                        <span>2. Araçlar sekmesinden araç ekleyin</span>
-                        <span>3. {isMobile ? 'Harita sekmesine geçip tıklayın' : 'Haritaya tıklayarak durak ekleyin'}</span>
-                        <span>4. "Optimize Et" butonuna basın</span>
+                        <span>{T.w1}<span onClick={() => setPage('depots')} style={{ color: C.accent, cursor: 'pointer', fontWeight: 600, textDecoration: 'underline' }}>{T.w1Link}</span>{T.w1End}</span>
+                        <span>{T.w2}</span>
+                        <span>{isMobile ? T.w3m : T.w3d}</span>
+                        <span>{T.w4}</span>
                       </div>
                     </InfoBox>
                   )}
                   {depots.length > 0 && vehicles.length === 0 && (
-                    <InfoBox icon="🚛" title="Araç eklemeniz gerekiyor" color={C.warning}>
-                      Araçlar sekmesine geçip en az 1 araç ekleyin.
+                    <InfoBox icon="🚛" title={T.needVehTitle} color={C.warning}>
+                      {T.needVehSub}
                     </InfoBox>
                   )}
                   {depots.length > 0 && vehicles.length > 0 && stops.length === 0 && (
-                    <InfoBox icon="📍" title="Harika! Şimdi durak ekleyin" color={C.success}>
-                      {isMobile ? 'Harita sekmesine geçip haritaya tıklayın.' : 'Haritaya tıklayın veya aşağıdan adres arayın.'}
+                    <InfoBox icon="📍" title={T.greatStopsTitle} color={C.success}>
+                      {isMobile ? T.greatStopsSubM : T.greatStopsSubD}
                     </InfoBox>
                   )}
 
                   <div style={{ padding: '10px', borderBottom: `1px solid ${C.borderLight}`, position: 'relative' }}>
-                    <input value={q} onChange={e => onQChange(e.target.value)} placeholder="🔍 Tam ilçe veya mahalle adı yazın..." style={inp()} />
-                    {searching && <div style={{ position: 'absolute', right: '18px', top: '20px', fontSize: '10px', color: C.textDim }}>aranıyor...</div>}
+                    <input value={q} onChange={e => onQChange(e.target.value)} placeholder={T.searchPlaceholder} style={inp()} />
+                    {searching && <div style={{ position: 'absolute', right: '18px', top: '20px', fontSize: '10px', color: C.textDim }}>{T.searching}</div>}
                     {qResults.length > 0 && (
                       <div style={{ position: 'absolute', zIndex: 100, background: C.bgCard, border: `1px solid ${C.border}`, borderRadius: '8px', boxShadow: C.shadow, width: 'calc(100% - 20px)', top: '100%', left: '10px', maxHeight: '250px', overflowY: 'auto' }}>
                         {qResults.map((r, i) => (
@@ -559,7 +715,7 @@ export default function Dashboard() {
 
                   <div style={{ flex: 1, overflowY: 'auto', padding: '8px' }}>
                     {stops.length === 0
-                      ? <EmptyState icon="📍" title="Durak yok" sub="Adres arayın veya haritaya tıklayın" />
+                      ? <EmptyState icon="📍" title={T.noStops} sub={T.noStopsSub} />
                       : stops.map((s, i) => {
                         const pc = PR[s.priority]
                         return (
@@ -593,7 +749,7 @@ export default function Dashboard() {
                   {stops.length > 0 && (
                     <div style={{ padding: '10px', borderTop: `1px solid ${C.borderLight}` }}>
                       <button onClick={optimize} disabled={optimizing || !canOpt} style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', background: canOpt && !optimizing ? C.accent : C.bgCard, color: canOpt && !optimizing ? '#fff' : C.textDim, border: 'none', borderRadius: '8px', padding: '11px', fontSize: '13px', fontWeight: 700, cursor: canOpt && !optimizing ? 'pointer' : 'not-allowed' }}>
-                        <ZapIcon />{optimizing ? 'Hesaplanıyor...' : `${stops.length} Durağı Optimize Et`}
+                        <ZapIcon />{optimizing ? T.optimizing : `${stops.length}${T.optStopsBtn}`}
                       </button>
                       {optimError && <p style={{ fontSize: '11px', color: C.danger, margin: '5px 0 0', textAlign: 'center' }}>{optimError}</p>}
                     </div>
@@ -605,14 +761,14 @@ export default function Dashboard() {
               {tab === 'vehicles' && (
                 <>
                   {depots.length === 0 && (
-                    <InfoBox icon="⚠️" title="Önce depo ekleyin" color={C.warning}>
-                      <span onClick={() => { setPage('depots'); if (isMobile) setSidebarOpen(false) }} style={{ color: C.accent, cursor: 'pointer', fontWeight: 600 }}>Depolar sayfasına git →</span>
+                    <InfoBox icon="⚠️" title={T.needDepotFirst} color={C.warning}>
+                      <span onClick={() => { setPage('depots'); if (isMobile) setSidebarOpen(false) }} style={{ color: C.accent, cursor: 'pointer', fontWeight: 600 }}>{T.goDepots}</span>
                     </InfoBox>
                   )}
 
                   <div style={{ flex: 1, overflowY: 'auto', padding: '8px' }}>
                     {vehicles.length === 0
-                      ? <EmptyState icon="🚛" title="Araç yok" sub={depots.length === 0 ? 'Önce depo ekleyin' : '"Araç Ekle" butonuna tıklayın'} />
+                      ? <EmptyState icon="🚛" title={T.noVehs} sub={depots.length === 0 ? T.needDepotFirst : T.noVehsSubBtn} />
                       : vehicles.map((v, i) => {
                         const sd = depots.find(d => d.id === v.depot_id)
                         return (
@@ -627,16 +783,16 @@ export default function Dashboard() {
                             </div>
                             <div style={{ fontSize: '11px', color: C.textMuted, lineHeight: 1.7, marginLeft: '14px' }}>
                               <div>{VC[v.type].i} {VC[v.type].l} • {v.max_weight_kg} kg • {v.start_time}–{v.end_time}</div>
-                              <div>🏭 {sd?.name} {!v.return_to_depot ? '→ Açık rota' : ''}</div>
-                              {v.max_days > 1 && <div style={{ color: C.warning }}>📅 {v.max_days} günlük</div>}
+                              <div>🏭 {sd?.name} {!v.return_to_depot ? T.openRouteDesc : ''}</div>
+                              {v.max_days > 1 && <div style={{ color: C.warning }}>📅 {v.max_days} {T.daysDesc}</div>}
                             </div>
                           </div>
                         )
                       })}
                   </div>
                   <div style={{ padding: '10px', borderTop: `1px solid ${C.borderLight}` }}>
-                    <button onClick={() => { if (depots.length === 0) { alert('Önce depo ekleyin.'); return }; setVForm(f => ({ ...f, depot_id: depots[0].id, end_depot_id: depots[0].id })); setVErrors({}); setShowVehicleModal(true) }} style={sBtn}>
-                      <PlusIcon s={13} /> Araç Ekle
+                    <button onClick={() => { if (depots.length === 0) { alert(T.errAddDepot); return }; setVForm(f => ({ ...f, depot_id: depots[0].id, end_depot_id: depots[0].id })); setVErrors({}); setShowVehicleModal(true) }} style={sBtn}>
+                      <PlusIcon s={13} /> {T.addVehBtn}
                     </button>
                   </div>
                 </>
@@ -646,21 +802,21 @@ export default function Dashboard() {
               {tab === 'result' && (
                 <div style={{ flex: 1, overflowY: 'auto', padding: '8px' }}>
                   {routes.length === 0
-                    ? <EmptyState icon="⚡" title="Sonuç yok" sub="Durak ve araç ekleyip optimize edin" />
+                    ? <EmptyState icon="⚡" title={T.noResult} sub={T.noResultSub} />
                     : (
                       <>
-                        <InfoBox icon="ℹ️" title="Demo Sürümü Hakkında">
-                          Gösterilen süreler gerçek yol mesafesine dayalı tahmindir. Anlık trafik hesaba katılmamaktadır.
+                        <InfoBox icon="ℹ️" title={T.demoTitle}>
+                          {T.demoDesc}
                         </InfoBox>
 
                         {summary && (
                           <div style={{ background: C.successL, border: '1px solid rgba(34,197,94,0.2)', borderRadius: '8px', padding: '12px', margin: '4px 8px 8px' }}>
-                            <div style={{ fontSize: '12px', fontWeight: 700, color: C.success, marginBottom: '8px' }}>✓ Optimizasyon Tamamlandı</div>
+                            <div style={{ fontSize: '12px', fontWeight: 700, color: C.success, marginBottom: '8px' }}>✓ {T.optDone}</div>
                             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
-                              <div><div style={{ fontSize: '10px', color: C.textMuted }}>Araç</div><div style={{ fontSize: '15px', fontWeight: 700, color: C.text }}>{summary.vehicles_used}</div></div>
-                              <div><div style={{ fontSize: '10px', color: C.textMuted }}>Durak</div><div style={{ fontSize: '15px', fontWeight: 700, color: C.text }}>{summary.total_stops}</div></div>
-                              <div><div style={{ fontSize: '10px', color: C.textMuted }}>Toplam Mesafe</div><div style={{ fontSize: '15px', fontWeight: 700, color: C.text }}>{summary.total_distance_km.toFixed(1)} km</div></div>
-                              {summary.unassigned_count > 0 && <div><div style={{ fontSize: '10px', color: C.textMuted }}>Atanamayan</div><div style={{ fontSize: '15px', fontWeight: 700, color: C.danger }}>{summary.unassigned_count}</div></div>}
+                              <div><div style={{ fontSize: '10px', color: C.textMuted }}>{T.vehCard}</div><div style={{ fontSize: '15px', fontWeight: 700, color: C.text }}>{summary.vehicles_used}</div></div>
+                              <div><div style={{ fontSize: '10px', color: C.textMuted }}>{T.stopCard}</div><div style={{ fontSize: '15px', fontWeight: 700, color: C.text }}>{summary.total_stops}</div></div>
+                              <div><div style={{ fontSize: '10px', color: C.textMuted }}>{T.distCard}</div><div style={{ fontSize: '15px', fontWeight: 700, color: C.text }}>{summary.total_distance_km.toFixed(1)} km</div></div>
+                              {summary.unassigned_count > 0 && <div><div style={{ fontSize: '10px', color: C.textMuted }}>{T.unassignedCard}</div><div style={{ fontSize: '15px', fontWeight: 700, color: C.danger }}>{summary.unassigned_count}</div></div>}
                             </div>
                           </div>
                         )}
@@ -674,7 +830,7 @@ export default function Dashboard() {
                               <div key={ri} style={{ background: C.bgCard, border: `1px solid ${C.borderLight}`, borderLeft: `3px solid ${r.color}`, borderRadius: '8px', padding: '11px', marginBottom: '7px' }}>
                                 <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
                                   <span style={{ fontSize: '13px', fontWeight: 700, color: C.text }}>{r.vehicle_name}</span>
-                                  <span style={{ fontSize: '11px', color: C.textMuted }}>{r.total_distance_km} km • {r.total_duration_min} dk*</span>
+                                  <span style={{ fontSize: '11px', color: C.textMuted }}>{r.total_distance_km} km • {r.total_duration_min} {T.minText}*</span>
                                 </div>
                                 {r.stops.map((s, j) => {
                                   const mapNum = orderedStopIds.indexOf(s.id) + 1
@@ -696,7 +852,7 @@ export default function Dashboard() {
                                 {/* Navigasyon butonu */}
                                 <div style={{ marginTop: '10px', paddingTop: '10px', borderTop: `1px solid ${C.borderLight}` }}>
                                   <a href={gUrl} target="_blank" rel="noreferrer" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '5px', padding: '8px', borderRadius: '7px', background: 'rgba(66,133,244,0.1)', border: '1px solid rgba(66,133,244,0.25)', color: '#4285f4', fontSize: '11px', fontWeight: 600, textDecoration: 'none' }}>
-                                    Google Maps'te Aç
+                                    {T.openMaps}
                                   </a>
                                 </div>
                               </div>
@@ -704,12 +860,12 @@ export default function Dashboard() {
                           })}
                         </div>
 
-                        <div style={{ padding: '4px 8px 8px', fontSize: '10px', color: C.textDim }}>* Trafik dahil edilmeden hesaplanmıştır</div>
+                        <div style={{ padding: '4px 8px 8px', fontSize: '10px', color: C.textDim }}>{T.noTraficNote}</div>
 
                         {unassigned.length > 0 && (
                           <div style={{ margin: '0 8px 8px', background: C.dangerL, border: '1px solid rgba(239,68,68,0.2)', borderRadius: '8px', padding: '11px' }}>
-                            <div style={{ fontSize: '12px', fontWeight: 700, color: C.danger, marginBottom: '5px' }}>⚠ Atanamayan ({unassigned.length})</div>
-                            <div style={{ fontSize: '11px', color: C.textMuted, marginBottom: '5px' }}>Kapasite veya zaman kısıtı nedeniyle atanamadı.</div>
+                            <div style={{ fontSize: '12px', fontWeight: 700, color: C.danger, marginBottom: '5px' }}>⚠ {T.unassignedTitle} ({unassigned.length})</div>
+                            <div style={{ fontSize: '11px', color: C.textMuted, marginBottom: '5px' }}>{T.unassignedDesc}</div>
                             {unassigned.map(s => <div key={s.id} style={{ fontSize: '11px', color: C.text, padding: '2px 0' }}>• {s.name}</div>)}
                           </div>
                         )}
@@ -724,12 +880,12 @@ export default function Dashboard() {
               <div ref={mapRef} style={{ position: 'absolute', inset: 0 }} />
               {!isMobile && (
                 <div style={{ position: 'absolute', bottom: '18px', left: '50%', transform: 'translateX(-50%)', background: 'rgba(24,28,39,0.88)', color: '#c8d4e8', borderRadius: '20px', padding: '5px 14px', fontSize: '11px', pointerEvents: 'none', backdropFilter: 'blur(8px)', fontWeight: 500, border: '1px solid rgba(255,255,255,0.06)' }}>
-                  Haritaya tıklayarak durak ekleyebilirsiniz
+                  {T.mapHint}
                 </div>
               )}
               {isMobile && (
                 <div style={{ position: 'absolute', bottom: '18px', left: '50%', transform: 'translateX(-50%)', background: 'rgba(24,28,39,0.88)', color: '#c8d4e8', borderRadius: '20px', padding: '5px 14px', fontSize: '11px', pointerEvents: 'none', backdropFilter: 'blur(8px)', fontWeight: 500, border: '1px solid rgba(255,255,255,0.06)', whiteSpace: 'nowrap' }}>
-                  Haritaya tıklayarak durak ekleyebilirsiniz
+                  {T.mapHint}
                 </div>
               )}
             </div>
@@ -740,18 +896,18 @@ export default function Dashboard() {
             <div style={{ flex: 1, padding: '20px', overflowY: 'auto' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '20px' }}>
                 <div>
-                  <h2 style={{ margin: 0, fontSize: '19px', fontWeight: 800, color: C.text }}>Depo Yönetimi</h2>
-                  <p style={{ margin: '3px 0 0', color: C.textMuted, fontSize: '13px' }}>Araçların başlangıç ve bitiş noktaları</p>
+                  <h2 style={{ margin: 0, fontSize: '19px', fontWeight: 800, color: C.text }}>{T.depotMgmtTitle}</h2>
+                  <p style={{ margin: '3px 0 0', color: C.textMuted, fontSize: '13px' }}>{T.depotMgmtSub}</p>
                 </div>
-                <button onClick={() => { setDErrors({}); setShowDepotModal(true) }} style={pBtn}><PlusIcon s={14} /> Depo Ekle</button>
+                <button onClick={() => { setDErrors({}); setShowDepotModal(true) }} style={pBtn}><PlusIcon s={14} /> {T.addDepotBtn}</button>
               </div>
               {depots.length === 0 && (
-                <InfoBox icon="🏭" title="Depo nedir?">
-                  Araçların yolculuğa başladığı ve/veya bitirdiği noktadır. Firmanızın deposu, ofisi veya herhangi bir başlangıç noktası olabilir. Optimize edebilmek için en az 1 depo gereklidir.
+                <InfoBox icon="🏭" title={T.whatIsDepotTitle}>
+                  {T.whatIsDepotDesc}
                 </InfoBox>
               )}
               {depots.length === 0
-                ? <EmptyState icon="🏭" title="Depo yok" sub="İlk deponuzu ekleyin" />
+                ? <EmptyState icon="🏭" title={T.noDepotsTitle} sub={T.noDepotsSub} />
                 : (
                   <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: '12px' }}>
                     {depots.map(d => (
@@ -778,9 +934,9 @@ export default function Dashboard() {
 
       {/* STOP MODAL */}
       {showStopModal && pendingLoc && (
-        <Modal title="Durak Ekle" sub={pendingLoc.address.substring(0, 70)} onClose={() => { setShowStopModal(false); setPendingLoc(null) }}>
-          <Field label="Durak Adı"><input value={stopForm.name} onChange={e => setStopForm(f => ({ ...f, name: e.target.value }))} style={inp()} /></Field>
-          <Field label="Öncelik">
+        <Modal title={T.addStopModalTitle} sub={pendingLoc.address.substring(0, 70)} onClose={() => { setShowStopModal(false); setPendingLoc(null) }}>
+          <Field label={T.stopNameLabel}><input value={stopForm.name} onChange={e => setStopForm(f => ({ ...f, name: e.target.value }))} style={inp()} /></Field>
+          <Field label={T.priorityLabel}>
             <div style={{ display: 'flex', gap: '6px' }}>
               {([1, 2, 3] as const).map(p => (
                 <button key={p} onClick={() => setStopForm(f => ({ ...f, priority: p }))} style={{ flex: 1, padding: '8px', borderRadius: '7px', cursor: 'pointer', fontSize: '12px', fontWeight: 600, border: `1.5px solid ${stopForm.priority === p ? PR[p].color : C.border}`, background: stopForm.priority === p ? PR[p].bg : C.bgCard, color: stopForm.priority === p ? PR[p].color : C.textMuted }}>
@@ -790,43 +946,43 @@ export default function Dashboard() {
             </div>
           </Field>
           <div style={{ display: 'flex', gap: '10px' }}>
-            <Field label="Pencere Başlangıç" flex><input type="time" value={stopForm.time_window_start} onChange={e => setStopForm(f => ({ ...f, time_window_start: e.target.value }))} style={inp()} /></Field>
-            <Field label="Pencere Bitiş" flex><input type="time" value={stopForm.time_window_end} onChange={e => setStopForm(f => ({ ...f, time_window_end: e.target.value }))} style={inp()} /></Field>
+            <Field label={T.winStartLabel} flex><input type="time" value={stopForm.time_window_start} onChange={e => setStopForm(f => ({ ...f, time_window_start: e.target.value }))} style={inp()} /></Field>
+            <Field label={T.winEndLabel} flex><input type="time" value={stopForm.time_window_end} onChange={e => setStopForm(f => ({ ...f, time_window_end: e.target.value }))} style={inp()} /></Field>
           </div>
           <div style={{ display: 'flex', gap: '10px' }}>
-            <Field label="Ağırlık (kg)" flex><input type="number" value={stopForm.weight_kg} onChange={e => setStopForm(f => ({ ...f, weight_kg: +e.target.value }))} style={inp()} /></Field>
-            <Field label="Koli" flex><input type="number" value={stopForm.parcel_count} onChange={e => setStopForm(f => ({ ...f, parcel_count: +e.target.value }))} style={inp()} /></Field>
-            <Field label="Hizmet (dk)" flex><input type="number" value={stopForm.service_duration_min} onChange={e => setStopForm(f => ({ ...f, service_duration_min: +e.target.value }))} style={inp()} /></Field>
+            <Field label={T.weightLabel} flex><input type="number" value={stopForm.weight_kg} onChange={e => setStopForm(f => ({ ...f, weight_kg: +e.target.value }))} style={inp()} /></Field>
+            <Field label={T.parcelLabel} flex><input type="number" value={stopForm.parcel_count} onChange={e => setStopForm(f => ({ ...f, parcel_count: +e.target.value }))} style={inp()} /></Field>
+            <Field label={T.serviceLabel} flex><input type="number" value={stopForm.service_duration_min} onChange={e => setStopForm(f => ({ ...f, service_duration_min: +e.target.value }))} style={inp()} /></Field>
           </div>
-          <ModalActions onCancel={() => { setShowStopModal(false); setPendingLoc(null) }} onSubmit={addStop} label="Durağı Ekle" />
+          <ModalActions onCancel={() => { setShowStopModal(false); setPendingLoc(null) }} onSubmit={addStop} label={T.submitStopBtn} cancelText={T.cancel} />
         </Modal>
       )}
 
       {/* VEHICLE MODAL */}
       {showVehicleModal && (
-        <Modal title="Araç Ekle" sub="Aracın özelliklerini belirleyin" onClose={() => setShowVehicleModal(false)}>
-          <Field label="Araç Adı">
-            <input value={vForm.name} onChange={e => { setVForm(f => ({ ...f, name: e.target.value })); setVErrors(p => ({ ...p, name: '' })) }} placeholder="Örn: Araç 1" style={inp(vErrors.name)} />
+        <Modal title={T.addVehModalTitle} sub={T.addVehModalSub} onClose={() => setShowVehicleModal(false)}>
+          <Field label={T.vehNameLabel}>
+            <input value={vForm.name} onChange={e => { setVForm(f => ({ ...f, name: e.target.value })); setVErrors(p => ({ ...p, name: '' })) }} placeholder={T.vehNamePlaceholder} style={inp(vErrors.name)} />
             {vErrors.name && <span style={{ fontSize: '11px', color: C.danger }}>{vErrors.name}</span>}
           </Field>
 
           <div style={{ display: 'flex', gap: '10px' }}>
-            <Field label="Max Ağırlık (kg)" flex><input type="number" value={vForm.max_weight_kg} onChange={e => setVForm(f => ({ ...f, max_weight_kg: +e.target.value }))} style={inp()} /></Field>
-            <Field label="Max Koli" flex><input type="number" value={vForm.max_parcels} onChange={e => setVForm(f => ({ ...f, max_parcels: +e.target.value }))} style={inp()} /></Field>
+            <Field label={T.maxWeightLabel} flex><input type="number" value={vForm.max_weight_kg} onChange={e => setVForm(f => ({ ...f, max_weight_kg: +e.target.value }))} style={inp()} /></Field>
+            <Field label={T.maxParcelLabel} flex><input type="number" value={vForm.max_parcels} onChange={e => setVForm(f => ({ ...f, max_parcels: +e.target.value }))} style={inp()} /></Field>
           </div>
-          <Field label="Başlangıç Deposu">
+          <Field label={T.startDepotLabel}>
             <select value={vForm.depot_id} onChange={e => { setVForm(f => ({ ...f, depot_id: e.target.value })); setVErrors(p => ({ ...p, depot: '' })) }} style={{ ...inp(vErrors.depot), cursor: 'pointer' }}>
-              <option value="">— Depo seçin —</option>
+              <option value="">{T.selectDepotEmpty}</option>
               {depots.map(d => <option key={d.id} value={d.id}>{d.name}</option>)}
             </select>
             {vErrors.depot && <span style={{ fontSize: '11px', color: C.danger }}>{vErrors.depot}</span>}
           </Field>
-          <Field label="Rota Sonu">
+          <Field label={T.endDepotLabel}>
             <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
               {[
-                { k: 'same', l: '🔄 Aynı Depoya Dön', active: vForm.return_to_depot },
-                { k: 'open', l: '🚪 Açık Rota', active: !vForm.return_to_depot && !vForm.end_depot_id },
-                ...(depots.length > 1 ? [{ k: 'other', l: '🏭 Farklı Depo', active: !vForm.return_to_depot && !!vForm.end_depot_id }] : []),
+                { k: 'same', l: T.optSameDepot, active: vForm.return_to_depot },
+                { k: 'open', l: T.optOpenRoute, active: !vForm.return_to_depot && !vForm.end_depot_id },
+                ...(depots.length > 1 ? [{ k: 'other', l: T.optDiffDepot, active: !vForm.return_to_depot && !!vForm.end_depot_id }] : []),
               ].map(o => (
                 <button key={o.k} onClick={() => {
                   if (o.k === 'same') setVForm(f => ({ ...f, return_to_depot: true, end_depot_id: f.depot_id }))
@@ -839,24 +995,24 @@ export default function Dashboard() {
             </div>
           </Field>
           <div style={{ display: 'flex', gap: '10px' }}>
-            <Field label="Çıkış" flex><input type="time" value={vForm.start_time} onChange={e => setVForm(f => ({ ...f, start_time: e.target.value }))} style={inp()} /></Field>
-            <Field label="Bitiş" flex><input type="time" value={vForm.end_time} onChange={e => setVForm(f => ({ ...f, end_time: e.target.value }))} style={inp()} /></Field>
-            <Field label="Max Gün" flex><input type="number" min={1} max={7} value={vForm.max_days} onChange={e => setVForm(f => ({ ...f, max_days: +e.target.value }))} style={inp()} /></Field>
+            <Field label={T.startLabel} flex><input type="time" value={vForm.start_time} onChange={e => setVForm(f => ({ ...f, start_time: e.target.value }))} style={inp()} /></Field>
+            <Field label={T.endLabel} flex><input type="time" value={vForm.end_time} onChange={e => setVForm(f => ({ ...f, end_time: e.target.value }))} style={inp()} /></Field>
+            <Field label={T.maxDaysLabel} flex><input type="number" min={1} max={7} value={vForm.max_days} onChange={e => setVForm(f => ({ ...f, max_days: +e.target.value }))} style={inp()} /></Field>
           </div>
-          <ModalActions onCancel={() => setShowVehicleModal(false)} onSubmit={submitVehicle} label="Aracı Ekle" />
+          <ModalActions onCancel={() => setShowVehicleModal(false)} onSubmit={submitVehicle} label={T.submitVehBtn} cancelText={T.cancel} />
         </Modal>
       )}
 
       {/* DEPOT MODAL */}
       {showDepotModal && (
-        <Modal title="Depo Ekle" sub="Araçların başlangıç/bitiş noktası" onClose={() => { setShowDepotModal(false); setDErrors({}); setDForm({ name: '', address: '', lat: 0, lng: 0 }); setDSearch('') }}>
-          <Field label="Depo Adı">
-            <input value={dForm.name} onChange={e => { setDForm(f => ({ ...f, name: e.target.value })); setDErrors(p => ({ ...p, name: '' })) }} placeholder="Örn: Merkez Depo" style={inp(dErrors.name)} />
+        <Modal title={T.addDepotModalTitle} sub={T.addDepotModalSub} onClose={() => { setShowDepotModal(false); setDErrors({}); setDForm({ name: '', address: '', lat: 0, lng: 0 }); setDSearch('') }}>
+          <Field label={T.depotNameLabel}>
+            <input value={dForm.name} onChange={e => { setDForm(f => ({ ...f, name: e.target.value })); setDErrors(p => ({ ...p, name: '' })) }} placeholder={T.depotNamePlaceholder} style={inp(dErrors.name)} />
             {dErrors.name && <span style={{ fontSize: '11px', color: C.danger }}>{dErrors.name}</span>}
           </Field>
-          <Field label="Adres">
+          <Field label={T.addressLabel}>
             <div style={{ position: 'relative' }}>
-              <input value={dSearch} onChange={e => { onDChange(e.target.value); setDErrors(p => ({ ...p, address: '' })) }} placeholder="İlçe veya mahalle adı yazın..." style={inp(dErrors.address)} />
+              <input value={dSearch} onChange={e => { onDChange(e.target.value); setDErrors(p => ({ ...p, address: '' })) }} placeholder={T.addressPlaceholder} style={inp(dErrors.address)} />
               {dForm.lat !== 0 && <div style={{ position: 'absolute', right: '10px', top: '10px', fontSize: '11px', color: C.success }}>✓</div>}
               {dResults.length > 0 && (
                 <div style={{ position: 'absolute', zIndex: 200, background: C.bgCard, border: `1px solid ${C.border}`, borderRadius: '8px', boxShadow: C.shadow, width: '100%', top: '100%', marginTop: '4px', maxHeight: '200px', overflowY: 'auto' }}>
@@ -871,9 +1027,9 @@ export default function Dashboard() {
                 </div>
               )}
             </div>
-            {dErrors.address ? <span style={{ fontSize: '11px', color: C.danger }}>{dErrors.address}</span> : <span style={{ fontSize: '10px', color: C.textDim }}>Listeden bir sonuç seçin</span>}
+            {dErrors.address ? <span style={{ fontSize: '11px', color: C.danger }}>{dErrors.address}</span> : <span style={{ fontSize: '10px', color: C.textDim }}>{T.selectFromListInfo}</span>}
           </Field>
-          <ModalActions onCancel={() => { setShowDepotModal(false); setDErrors({}); setDForm({ name: '', address: '', lat: 0, lng: 0 }); setDSearch('') }} onSubmit={submitDepot} label="Depoyu Ekle" />
+          <ModalActions onCancel={() => { setShowDepotModal(false); setDErrors({}); setDForm({ name: '', address: '', lat: 0, lng: 0 }); setDSearch('') }} onSubmit={submitDepot} label={T.submitDepotBtn} cancelText={T.cancel} />
         </Modal>
       )}
     </div>
